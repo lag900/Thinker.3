@@ -77,45 +77,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders
-  app.post("/api/orders", async (req, res) => {
-    const { customerId, items } = req.body;
+  app.get("/api/orders", async (req, res) => {
+    const orders = await storage.getOrders();
+    res.json(orders);
+  });
 
-    // Calculate total from items
-    const total = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+  app.post("/api/orders", async (req, res) => {
+    const { customerId, items, discount = 0 } = req.body;
+
+    // Calculate totals
+    const subtotal = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+    const total = subtotal - ((subtotal * discount) / 100);
+    let totalProfit = 0;
 
     const order = await storage.createOrder({
       customerId,
       status: "pending",
-      total
+      subtotal: subtotal.toString(),
+      discount: discount.toString(),
+      total: total.toString(),
+      profit: "0", // Will be updated after creating order items
     });
 
-    // Create order items
+    // Create order items and calculate profit
     for (const item of items) {
-      await storage.createOrderItem({
-        orderId: order.id,
-        productId: item.productId,
-        quantity: item.quantity,
-        price: item.price
-      });
-
-      // Update product stock
       const product = await storage.getProduct(item.productId);
       if (product) {
+        const itemProfit = (item.price - Number(product.wholesalePrice)) * item.quantity;
+        totalProfit += itemProfit;
+
+        await storage.createOrderItem({
+          orderId: order.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          wholesalePrice: product.wholesalePrice,
+          price: item.price.toString(),
+          profit: itemProfit.toString()
+        });
+
+        // Update product stock
         await storage.updateProduct(item.productId, {
           stock: product.stock - item.quantity
         });
       }
     }
 
+    // Update order with total profit
+    const updatedOrder = await storage.updateOrder(order.id, {
+      profit: totalProfit.toString()
+    });
+
+    // Create notification for new order
+    await storage.createNotification({
+      type: "new_order",
+      message: `طلب جديد #${order.id} بقيمة $${total.toFixed(2)}`,
+      isRead: false,
+      createdAt: new Date().toISOString()
+    });
+
+    res.json(updatedOrder);
+  });
+
+  app.patch("/api/orders/:id", async (req, res) => {
+    const order = await storage.updateOrder(parseInt(req.params.id), req.body);
+
+    // Create notification for order status change
+    if (req.body.status) {
+      let statusText = "";
+      switch (req.body.status) {
+        case "processing":
+          statusText = "قيد المعالجة";
+          break;
+        case "completed":
+          statusText = "مكتمل";
+          break;
+        case "cancelled":
+          statusText = "ملغي";
+          break;
+      }
+
+      await storage.createNotification({
+        type: "order_status",
+        message: `تم تغيير حالة الطلب #${order.id} إلى ${statusText}`,
+        isRead: false,
+        createdAt: new Date().toISOString()
+      });
+    }
+
     res.json(order);
   });
 
-  // Add these routes after the existing ones
   app.get("/api/order-items", async (req, res) => {
-    const items = await storage.getOrderItems();
+    const items = await storage.getAllOrderItems();
     res.json(items);
   });
 
+  // Expenses
+  app.get("/api/expenses", async (req, res) => {
+    const expenses = await storage.getExpenses();
+    res.json(expenses);
+  });
+
+  app.post("/api/expenses", async (req, res) => {
+    const expense = await storage.createExpense(req.body);
+    res.json(expense);
+  });
+
+  // Notifications
   app.get("/api/notifications", async (req, res) => {
     const notifications = await storage.getNotifications();
     res.json(notifications);
@@ -125,7 +193,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await storage.markNotificationAsRead(parseInt(req.params.id));
     res.status(204).end();
   });
-
 
   const httpServer = createServer(app);
   return httpServer;

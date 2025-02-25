@@ -7,7 +7,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  role: text("role").notNull().default("customer"), // "admin" or "customer"
+  role: text("role").notNull().default("customer"),
 });
 
 export const products = pgTable("products", {
@@ -39,7 +39,7 @@ export const suppliers = pgTable("suppliers", {
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   customerId: integer("customer_id").notNull(),
-  status: text("status").notNull(),
+  status: text("status").notNull(), // "pending", "processing", "completed", "cancelled"
   subtotal: numeric("subtotal").notNull(),
   discount: numeric("discount").notNull().default("0"),
   total: numeric("total").notNull(),
