@@ -97,12 +97,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       discount: discount.toString(),
       total: total.toString(),
       profit: "0", // Will be updated after creating order items
+      shippingAddress: req.body.shippingAddress,
+      shippingCity: req.body.shippingCity,
+      shippingCountry: req.body.shippingCountry
     });
 
-    // Create order items and calculate profit
-    for (const item of items) {
-      const product = await storage.getProduct(item.productId);
-      if (product) {
+    try {
+      // Create order items and calculate profit
+      for (const item of items) {
+        const product = await storage.getProduct(item.productId);
+        if (!product) {
+          throw new Error(`Product ${item.productId} not found`);
+        }
+
+        // Check if we have enough stock
+        if (product.stock < item.quantity) {
+          throw new Error(`Not enough stock for product ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`);
+        }
+
         const itemProfit = (item.price - Number(product.wholesalePrice)) * item.quantity;
         totalProfit += itemProfit;
 
@@ -119,23 +131,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateProduct(item.productId, {
           stock: product.stock - item.quantity
         });
+
+        // Create notification if stock is low after update
+        if (product.stock - item.quantity <= product.minStockLevel) {
+          await storage.createNotification({
+            type: "low_stock",
+            message: `المنتج ${product.name} منخفض المخزون (${product.stock - item.quantity} وحدة متبقية)`,
+            isRead: false,
+            createdAt: new Date().toISOString()
+          });
+        }
       }
+
+      // Update order with total profit
+      const updatedOrder = await storage.updateOrder(order.id, {
+        profit: totalProfit.toString()
+      });
+
+      // Create notification for new order
+      await storage.createNotification({
+        type: "new_order",
+        message: `طلب جديد #${order.id} بقيمة $${total.toFixed(2)}`,
+        isRead: false,
+        createdAt: new Date().toISOString()
+      });
+
+      res.json(updatedOrder);
+    } catch (error: any) {
+      // If there's an error, send appropriate response
+      res.status(400).json({ 
+        message: error.message || "حدث خطأ أثناء إنشاء الطلب" 
+      });
     }
-
-    // Update order with total profit
-    const updatedOrder = await storage.updateOrder(order.id, {
-      profit: totalProfit.toString()
-    });
-
-    // Create notification for new order
-    await storage.createNotification({
-      type: "new_order",
-      message: `طلب جديد #${order.id} بقيمة $${total.toFixed(2)}`,
-      isRead: false,
-      createdAt: new Date().toISOString()
-    });
-
-    res.json(updatedOrder);
   });
 
   app.patch("/api/orders/:id", async (req, res) => {
