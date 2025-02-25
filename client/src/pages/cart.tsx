@@ -14,6 +14,7 @@ interface CartItem {
 export default function Cart() {
   const [, navigate] = useLocation();
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [discount, setDiscount] = useState<number>(0);
 
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -42,14 +43,16 @@ export default function Cart() {
     });
   };
 
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const discountAmount = (subtotal * discount) / 100;
+  const total = subtotal - discountAmount;
 
   if (cart.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
-          <Button onClick={() => navigate("/")}>Continue Shopping</Button>
+          <h1 className="text-2xl font-bold mb-4">السلة فارغة</h1>
+          <Button onClick={() => navigate("/")}>متابعة التسوق</Button>
         </div>
       </div>
     );
@@ -58,7 +61,7 @@ export default function Cart() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-8">Shopping Cart</h1>
+        <h1 className="text-2xl font-bold mb-8">سلة المشتريات</h1>
 
         <div className="space-y-4">
           {cart.map((item) => (
@@ -69,7 +72,7 @@ export default function Cart() {
               <div className="flex-1">
                 <h3 className="font-medium">{item.name}</h3>
                 <div className="text-sm text-muted-foreground">
-                  ${item.price} each
+                  ${item.price} للوحدة
                 </div>
               </div>
 
@@ -82,14 +85,14 @@ export default function Cart() {
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
-                  
+
                   <Input
                     type="number"
                     value={item.quantity}
                     className="w-20 text-center"
                     readOnly
                   />
-                  
+
                   <Button
                     variant="outline"
                     size="icon"
@@ -116,18 +119,47 @@ export default function Cart() {
         </div>
 
         <div className="mt-8 p-4 border rounded-lg">
-          <div className="flex justify-between items-center mb-4">
-            <div className="text-lg font-medium">Total</div>
-            <div className="text-2xl font-bold">${total.toFixed(2)}</div>
-          </div>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium flex-1">نسبة الخصم (%)</label>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={discount}
+                onChange={(e) => setDiscount(Math.max(0, Math.min(100, Number(e.target.value))))}
+                className="w-24 text-center"
+              />
+            </div>
 
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={() => navigate("/checkout")}
-          >
-            Proceed to Checkout
-          </Button>
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center mb-2">
+                <div className="text-sm text-muted-foreground">المجموع الفرعي</div>
+                <div className="font-medium">${subtotal.toFixed(2)}</div>
+              </div>
+
+              <div className="flex justify-between items-center mb-2">
+                <div className="text-sm text-muted-foreground">الخصم</div>
+                <div className="font-medium text-green-600">-${discountAmount.toFixed(2)}</div>
+              </div>
+
+              <div className="flex justify-between items-center text-lg font-bold">
+                <div>الإجمالي</div>
+                <div>${total.toFixed(2)}</div>
+              </div>
+            </div>
+
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={() => {
+                localStorage.setItem('cartDiscount', discount.toString());
+                navigate("/checkout");
+              }}
+            >
+              متابعة الشراء
+            </Button>
+          </div>
         </div>
       </div>
     </div>
