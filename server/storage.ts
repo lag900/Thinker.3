@@ -53,6 +53,11 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   getNotifications(): Promise<Notification[]>;
   markNotificationAsRead(id: number): Promise<void>;
+
+  // Shipping Updates
+  getOrderShippingUpdates(orderId: number): Promise<OrderShippingUpdate[]>;
+  createOrderShippingUpdate(update: InsertOrderShippingUpdate): Promise<OrderShippingUpdate>;
+  updateOrderShippingStatus(orderId: number, status: string): Promise<Order>;
 }
 
 export class MemStorage implements IStorage {
@@ -64,6 +69,7 @@ export class MemStorage implements IStorage {
   private orderItems: Map<number, OrderItem>;
   private expenses: Map<number, Expense>;
   private notifications: Map<number, Notification>;
+  private orderShippingUpdates: Map<number, OrderShippingUpdate>;
   private currentId: { [key: string]: number };
 
   constructor() {
@@ -75,6 +81,7 @@ export class MemStorage implements IStorage {
     this.orderItems = new Map();
     this.expenses = new Map();
     this.notifications = new Map();
+    this.orderShippingUpdates = new Map();
     this.currentId = {
       users: 1,
       products: 1,
@@ -83,7 +90,8 @@ export class MemStorage implements IStorage {
       orders: 1,
       orderItems: 1,
       expenses: 1,
-      notifications: 1
+      notifications: 1,
+      orderShippingUpdates: 1
     };
 
     // Add sample admin user
@@ -271,6 +279,41 @@ export class MemStorage implements IStorage {
     if (notification) {
       this.notifications.set(id, { ...notification, isRead: true });
     }
+  }
+
+  async getOrderShippingUpdates(orderId: number): Promise<OrderShippingUpdate[]> {
+    return Array.from(this.orderShippingUpdates.values())
+      .filter(update => update.orderId === orderId)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  async createOrderShippingUpdate(update: InsertOrderShippingUpdate): Promise<OrderShippingUpdate> {
+    const id = this.currentId.orderShippingUpdates++;
+    const newUpdate = { ...update, id };
+    this.orderShippingUpdates.set(id, newUpdate);
+
+    // Create notification for shipping update
+    await this.createNotification({
+      type: "shipping_update",
+      message: `تحديث الشحن للطلب #${update.orderId}: ${update.description}`,
+      isRead: false,
+      createdAt: new Date()
+    });
+
+    return newUpdate;
+  }
+
+  async updateOrderShippingStatus(orderId: number, status: string): Promise<Order> {
+    const order = await this.getOrder(orderId);
+    if (!order) throw new Error("Order not found");
+
+    const updatedOrder = {
+      ...order,
+      shippingStatus: status,
+      updatedAt: new Date()
+    };
+    this.orders.set(orderId, updatedOrder);
+    return updatedOrder;
   }
 }
 

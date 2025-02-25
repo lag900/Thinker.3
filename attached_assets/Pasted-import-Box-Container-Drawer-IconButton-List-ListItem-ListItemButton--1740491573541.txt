@@ -1,0 +1,317 @@
+import {
+  Box,
+  Container,
+  Drawer,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Stack,
+  Typography,
+  useMediaQuery,
+} from "@mui/material";
+import * as React from "react";
+import Button from "@mui/material/Button";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import AutoAwesomeMosaicIcon from "@mui/icons-material/AutoAwesomeMosaic";
+import MenuIcon from "@mui/icons-material/Menu";
+import AR from "../photos/arduino.svg";
+import SettingsRemoteIcon from "@mui/icons-material/SettingsRemote";
+import SettingsInputComponentIcon from "@mui/icons-material/SettingsInputComponent";
+import ViewInArIcon from "@mui/icons-material/ViewInAr";
+import HomeRepairServiceIcon from "@mui/icons-material/HomeRepairService";
+import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
+import CloseIcon from "@mui/icons-material/Close";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Links from "./Links";
+
+export default function Header3() {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const [state, setState] = React.useState({
+    top: false,
+    left: false,
+    bottom: false,
+    right: false,
+  });
+
+  const toggleDrawer = (anchor, open) => (event) => {
+    if (
+      event.type === "keydown" &&
+      (event.key === "Tab" || event.key === "Shift")
+    ) {
+      return;
+    }
+
+    setState({ ...state, [anchor]: open });
+  };
+
+  return (
+    <Container
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        mt: 0,
+      }}
+    >
+      <Button
+        sx={{
+          color: "#ffff",
+          background: "#647F86",
+          width: "222px",
+        }}
+        id="basic-button"
+        aria-controls={open ? "basic-menu" : undefined}
+        aria-haspopup="true"
+        aria-expanded={open ? "true" : undefined}
+        onClick={handleClick}
+      >
+        <AutoAwesomeMosaicIcon />
+        <Typography sx={{ padding: "0", textTransform: "capitalize", mx: 1 }}>
+          Categories
+        </Typography>
+        <Box flexGrow={1}></Box>
+        <ArrowForwardIosIcon />
+      </Button>
+      <Menu
+        id="basic-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        MenuListProps={{
+          "aria-labelledby": "basic-button",
+        }}
+        sx={{ width: "30%" }}
+      >
+        <a href="#" style={{ textDecoration: "none", color: "#777" }}>
+          <MenuItem onClick={handleClose}>
+            <ListItemIcon>
+              {" "}
+              <img src={AR} style={{ width: "20px" }} />
+            </ListItemIcon>
+            <ListItemText sx={{ textDecoration: "none" }}></ListItemText>
+            Development Boards
+          </MenuItem>
+        </a>
+        <a href="#" style={{ textDecoration: "none", color: "#777" }}>
+          <MenuItem onClick={handleClose}>
+            <ListItemIcon>
+              {" "}
+              <SettingsRemoteIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText sx={{ textDecoration: "none" }}>Sensors</ListItemText>
+          </MenuItem>
+        </a>
+        <a href="#" style={{ textDecoration: "none", color: "#777" }}>
+          <MenuItem onClick={handleClose}>
+            <ListItemIcon>
+              {" "}
+              <SettingsInputComponentIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText sx={{ textDecoration: "none" }}>
+              Components
+            </ListItemText>
+          </MenuItem>
+        </a>
+        <a href="#" style={{ textDecoration: "none", color: "#777" }}>
+          <MenuItem onClick={handleClose}>
+            <ListItemIcon>
+              {" "}
+              <HomeRepairServiceIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText sx={{ textDecoration: "none" }}>
+              Package{" "}
+            </ListItemText>
+          </MenuItem>
+        </a>
+        <a href="#" style={{ textDecoration: "none", color: "#777" }}>
+          <MenuItem onClick={handleClose}>
+            <ListItemIcon>
+              {" "}
+              <ViewInArIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText sx={{ textDecoration: "none" }}>
+              3D Printing
+            </ListItemText>
+          </MenuItem>
+        </a>
+        <a href="#" style={{ textDecoration: "none", color: "#777" }}>
+          <MenuItem onClick={handleClose}>
+            <ListItemIcon>
+              {" "}
+              <PrecisionManufacturingIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText sx={{ textDecoration: "none" }}>
+              Robotics
+            </ListItemText>
+          </MenuItem>
+        </a>
+      </Menu>
+      {useMediaQuery("(min-width:1200px)") && (
+        <Stack direction={"row"} alignItems={"center"}>
+          <Links></Links>
+        </Stack>
+      )}
+
+      {useMediaQuery("(max-width:1200px)") && (
+        <IconButton onClick={toggleDrawer("top", true)}>
+          <MenuIcon />
+        </IconButton>
+      )}
+
+      <Drawer
+        anchor={"top"}
+        open={state["top"]}
+        onClose={toggleDrawer("top", false)}
+        sx={{
+          ".MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation16": {
+            height: "100%",
+          },
+        }}
+      >
+        <Box
+          className="border"
+          sx={{ width: 444, mx: "auto", mt: 7, position: "relative", pt: 10 }}
+        >
+          <IconButton
+            sx={{
+              ":hover": { color: "red", rotate: "180deg", transition: "0.3s" },
+              position: "absolute",
+              top: 0,
+              right: 1,
+            }}
+            onClick={toggleDrawer("top", false)}
+          >
+            <CloseIcon />
+          </IconButton>
+          <List>
+            <ListItem disablePadding>
+              {/* link<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */}
+
+              <ListItemButton component="a" href="#">
+                <ListItemText sx={{ py: 0, my: 0 }} primary="Home" />
+              </ListItemButton>
+            </ListItem>
+          </List>
+
+          <Accordion elevation={0} sx={{ bgcolor: "initial" }}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls="panel1-content"
+              id="panel1-header"
+            >
+              <ListItemText primary="Shoping" />
+            </AccordionSummary>
+            <AccordionDetails>
+              <List sx={{ py: 0, my: 0 }}>
+                <ListItem sx={{ py: 0, my: 0 }}>
+                  {/* link<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */}
+                  <ListItemButton component="a" href="#">
+                    <ListItemIcon>
+                      {" "}
+                      <ViewInArIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primary="3d Printing" />
+                  </ListItemButton>
+                </ListItem>
+
+                <ListItem>
+                  {/* link<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */}
+                  <ListItemButton component="a" href="#">
+                    <ListItemIcon>
+                      {" "}
+                      <HomeRepairServiceIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText sx={{ textDecoration: "none" }}>
+                      Package{" "}
+                    </ListItemText>
+                  </ListItemButton>
+                </ListItem>
+                <ListItem>
+                  {/* link<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */}
+                  <ListItemButton component="a" href="#">
+                    <ListItemIcon>
+                      {" "}
+                      <HomeRepairServiceIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText sx={{ textDecoration: "none" }}>
+                      Package{" "}
+                    </ListItemText>
+                  </ListItemButton>
+                </ListItem>
+                <ListItem>
+                  {/* link<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */}
+                  <ListItemButton component="a" href="#">
+                    <ListItemIcon>
+                      {" "}
+                      <HomeRepairServiceIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText sx={{ textDecoration: "none" }}>
+                      Package{" "}
+                    </ListItemText>
+                  </ListItemButton>
+                </ListItem>
+                <ListItem>
+                  {/* link<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */}
+                  <ListItemButton component="a" href="#">
+                    <ListItemIcon>
+                      {" "}
+                      <HomeRepairServiceIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText sx={{ textDecoration: "none" }}>
+                      Package{" "}
+                    </ListItemText>
+                  </ListItemButton>
+                </ListItem>
+                <ListItem>
+                  {/* link<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */}
+                  <ListItemButton component="a" href="#">
+                    <ListItemIcon>
+                      {" "}
+                      <HomeRepairServiceIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText sx={{ textDecoration: "none" }}>
+                      Package{" "}
+                    </ListItemText>
+                  </ListItemButton>
+                </ListItem>
+              </List>
+            </AccordionDetails>
+          </Accordion>
+          <List>
+            <ListItem disablePadding>
+              {/* link<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */}
+
+              <ListItemButton component="a" href="#">
+                <ListItemText sx={{ py: 0, my: 0 }} primary="My Account" />
+              </ListItemButton>
+            </ListItem>
+          </List>
+          <List>
+            <ListItem disablePadding>
+              {/* link<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */}
+              <ListItemButton component="a" href="#">
+                <ListItemText sx={{ py: 0, my: 0 }} primary="Contact" />
+              </ListItemButton>
+            </ListItem>
+          </List>
+        </Box>
+      </Drawer>
+    </Container>
+  );
+}

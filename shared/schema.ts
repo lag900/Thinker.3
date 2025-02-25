@@ -27,6 +27,9 @@ export const customers = pgTable("customers", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   phone: text("phone").notNull(),
+  address: text("address").notNull().default(""),
+  city: text("city").notNull().default(""),
+  country: text("country").notNull().default(""),
 });
 
 export const suppliers = pgTable("suppliers", {
@@ -39,12 +42,28 @@ export const suppliers = pgTable("suppliers", {
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   customerId: integer("customer_id").notNull(),
-  status: text("status").notNull(), // "pending", "processing", "completed", "cancelled"
+  status: text("status").notNull(), // "pending", "processing", "shipping", "delivered", "cancelled"
+  shippingStatus: text("shipping_status"), // "preparing", "shipped", "in_transit", "out_for_delivery", "delivered"
+  trackingNumber: text("tracking_number"),
+  shippingAddress: text("shipping_address").notNull(),
+  shippingCity: text("shipping_city").notNull(),
+  shippingCountry: text("shipping_country").notNull(),
   subtotal: numeric("subtotal").notNull(),
   discount: numeric("discount").notNull().default("0"),
+  shippingCost: numeric("shipping_cost").notNull().default("0"),
   total: numeric("total").notNull(),
   profit: numeric("profit").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const orderShippingUpdates = pgTable("order_shipping_updates", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull(),
+  status: text("status").notNull(),
+  location: text("location"),
+  description: text("description").notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 
 export const orderItems = pgTable("order_items", {
@@ -66,7 +85,7 @@ export const expenses = pgTable("expenses", {
 
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
-  type: text("type").notNull(), // "low_stock", "new_order", etc.
+  type: text("type").notNull(), // "low_stock", "new_order", "shipping_update", etc.
   message: text("message").notNull(),
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -78,6 +97,7 @@ export const insertProductSchema = createInsertSchema(products).omit({ id: true 
 export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true });
 export const insertSupplierSchema = createInsertSchema(suppliers).omit({ id: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true });
+export const insertOrderShippingUpdateSchema = createInsertSchema(orderShippingUpdates).omit({ id: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true });
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true });
@@ -93,6 +113,8 @@ export type Supplier = typeof suppliers.$inferSelect;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type OrderShippingUpdate = typeof orderShippingUpdates.$inferSelect;
+export type InsertOrderShippingUpdate = z.infer<typeof insertOrderShippingUpdateSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type Expense = typeof expenses.$inferSelect;

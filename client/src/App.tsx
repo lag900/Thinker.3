@@ -8,6 +8,7 @@ import Home from "@/pages/home";
 import Product from "@/pages/product";
 import Cart from "@/pages/cart";
 import Checkout from "@/pages/checkout";
+import Tracking from "@/pages/tracking";
 import Invoice from "@/pages/admin/invoice";
 import Analytics from "@/pages/admin/analytics";
 import Orders from "@/pages/admin/orders";
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/product/:id" component={Product} />
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
+      <Route path="/tracking/:id" component={Tracking} />
       <Route path="/admin/invoice" component={Invoice} />
       <Route path="/admin/analytics" component={Analytics} />
       <Route path="/admin/orders" component={Orders} />

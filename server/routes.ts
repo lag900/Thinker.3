@@ -172,6 +172,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(items);
   });
 
+  // Add these routes after the existing order routes
+  app.get("/api/orders/:id", async (req, res) => {
+    const order = await storage.getOrder(parseInt(req.params.id));
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json(order);
+  });
+
+  app.get("/api/orders/:id/shipping-updates", async (req, res) => {
+    const updates = await storage.getOrderShippingUpdates(parseInt(req.params.id));
+    res.json(updates);
+  });
+
+  app.post("/api/orders/:id/shipping-updates", async (req, res) => {
+    const orderId = parseInt(req.params.id);
+    const order = await storage.getOrder(orderId);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    const update = await storage.createOrderShippingUpdate({
+      orderId,
+      status: req.body.status,
+      location: req.body.location,
+      description: req.body.description,
+      timestamp: new Date()
+    });
+
+    // Update order shipping status
+    await storage.updateOrderShippingStatus(orderId, req.body.status);
+
+    res.json(update);
+  });
+
+
   // Expenses
   app.get("/api/expenses", async (req, res) => {
     const expenses = await storage.getExpenses();
