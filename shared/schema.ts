@@ -10,11 +10,20 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("customer"),
 });
 
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull().default(""),
+  parent_id: integer("parent_id"), // For subcategories
+});
+
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   code: text("code").notNull().unique(),
   description: text("description").notNull(),
+  categoryId: integer("category_id").notNull(),
   wholesalePrice: numeric("wholesale_price").notNull(),
   price: numeric("price").notNull(),
   stock: integer("stock").notNull(),
@@ -101,6 +110,7 @@ export const insertOrderShippingUpdateSchema = createInsertSchema(orderShippingU
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true });
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true });
+export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -121,3 +131,5 @@ export type Expense = typeof expenses.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;

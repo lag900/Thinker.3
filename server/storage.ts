@@ -6,7 +6,9 @@ import {
   type Order, type InsertOrder,
   type OrderItem, type InsertOrderItem,
   type Expense, type InsertExpense,
-  type Notification, type InsertNotification
+  type Notification, type InsertNotification,
+  type OrderShippingUpdate, type InsertOrderShippingUpdate,
+  type Category, type InsertCategory
 } from "@shared/schema";
 
 export interface IStorage {
@@ -58,6 +60,14 @@ export interface IStorage {
   getOrderShippingUpdates(orderId: number): Promise<OrderShippingUpdate[]>;
   createOrderShippingUpdate(update: InsertOrderShippingUpdate): Promise<OrderShippingUpdate>;
   updateOrderShippingStatus(orderId: number, status: string): Promise<Order>;
+
+  // Categories
+  getCategories(): Promise<Category[]>;
+  getCategory(id: number): Promise<Category | undefined>;
+  getCategoryByCode(code: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category>;
+  deleteCategory(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -70,6 +80,7 @@ export class MemStorage implements IStorage {
   private expenses: Map<number, Expense>;
   private notifications: Map<number, Notification>;
   private orderShippingUpdates: Map<number, OrderShippingUpdate>;
+  private categories: Map<number, Category>;
   private currentId: { [key: string]: number };
 
   constructor() {
@@ -82,6 +93,7 @@ export class MemStorage implements IStorage {
     this.expenses = new Map();
     this.notifications = new Map();
     this.orderShippingUpdates = new Map();
+    this.categories = new Map();
     this.currentId = {
       users: 1,
       products: 1,
@@ -91,7 +103,8 @@ export class MemStorage implements IStorage {
       orderItems: 1,
       expenses: 1,
       notifications: 1,
-      orderShippingUpdates: 1
+      orderShippingUpdates: 1,
+      categories: 1
     };
 
     // Add sample admin user
@@ -112,6 +125,19 @@ export class MemStorage implements IStorage {
       stock: 100,
       image: "https://source.unsplash.com/400x400/?product",
       minStockLevel: 10
+    });
+
+    // Add sample categories
+    this.createCategory({
+      name: "الإلكترونيات",
+      code: "electronics",
+      description: "الأجهزة الإلكترونية والكهربائية"
+    });
+
+    this.createCategory({
+      name: "الملابس",
+      code: "clothing",
+      description: "الملابس والأزياء"
     });
   }
 
@@ -314,6 +340,38 @@ export class MemStorage implements IStorage {
     };
     this.orders.set(orderId, updatedOrder);
     return updatedOrder;
+  }
+
+  // Categories
+  async getCategories(): Promise<Category[]> {
+    return Array.from(this.categories.values());
+  }
+
+  async getCategory(id: number): Promise<Category | undefined> {
+    return this.categories.get(id);
+  }
+
+  async getCategoryByCode(code: string): Promise<Category | undefined> {
+    return Array.from(this.categories.values()).find(cat => cat.code === code);
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const id = this.currentId.categories++;
+    const newCategory = { ...category, id };
+    this.categories.set(id, newCategory);
+    return newCategory;
+  }
+
+  async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category> {
+    const existing = await this.getCategory(id);
+    if (!existing) throw new Error("Category not found");
+    const updated = { ...existing, ...category };
+    this.categories.set(id, updated);
+    return updated;
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    this.categories.delete(id);
   }
 }
 

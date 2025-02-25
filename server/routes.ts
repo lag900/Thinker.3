@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertCustomerSchema, insertSupplierSchema } from "@shared/schema";
+import { insertProductSchema, insertCustomerSchema, insertSupplierSchema, insertCategorySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Products
@@ -172,7 +172,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(items);
   });
 
-  // Add these routes after the existing order routes
+  // Categories
+  app.get("/api/categories", async (req, res) => {
+    const categories = await storage.getCategories();
+    res.json(categories);
+  });
+
+  app.get("/api/categories/:id", async (req, res) => {
+    const category = await storage.getCategory(parseInt(req.params.id));
+    if (!category) return res.status(404).json({ message: "Category not found" });
+    res.json(category);
+  });
+
+  app.post("/api/categories", async (req, res) => {
+    const result = insertCategorySchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ message: "Invalid category data" });
+    }
+    const category = await storage.createCategory(result.data);
+    res.json(category);
+  });
+
+  app.patch("/api/categories/:id", async (req, res) => {
+    const category = await storage.updateCategory(parseInt(req.params.id), req.body);
+    res.json(category);
+  });
+
+  app.delete("/api/categories/:id", async (req, res) => {
+    await storage.deleteCategory(parseInt(req.params.id));
+    res.status(204).end();
+  });
+
   app.get("/api/orders/:id", async (req, res) => {
     const order = await storage.getOrder(parseInt(req.params.id));
     if (!order) return res.status(404).json({ message: "Order not found" });
