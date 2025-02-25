@@ -3,7 +3,8 @@ import {
   type Customer, type InsertCustomer,
   type Supplier, type InsertSupplier,
   type Order, type InsertOrder,
-  type OrderItem, type InsertOrderItem
+  type OrderItem, type InsertOrderItem,
+  type Notification, type InsertNotification
 } from "@shared/schema";
 
 export interface IStorage {
@@ -34,6 +35,12 @@ export interface IStorage {
   createOrder(order: InsertOrder): Promise<Order>;
   getOrderItems(orderId: number): Promise<OrderItem[]>;
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
+
+  // Analytics
+  getOrderItems(): Promise<OrderItem[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getNotifications(): Promise<Notification[]>;
+  markNotificationAsRead(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -42,6 +49,7 @@ export class MemStorage implements IStorage {
   private suppliers: Map<number, Supplier>;
   private orders: Map<number, Order>;
   private orderItems: Map<number, OrderItem>;
+  private notifications: Map<number, Notification>;
   private currentId: { [key: string]: number };
 
   constructor() {
@@ -50,12 +58,14 @@ export class MemStorage implements IStorage {
     this.suppliers = new Map();
     this.orders = new Map();
     this.orderItems = new Map();
+    this.notifications = new Map();
     this.currentId = {
       products: 1,
       customers: 1,
       suppliers: 1,
       orders: 1,
-      orderItems: 1
+      orderItems: 1,
+      notifications: 1
     };
 
     // Add some sample data
@@ -178,6 +188,28 @@ export class MemStorage implements IStorage {
     const newOrderItem = { ...orderItem, id };
     this.orderItems.set(id, newOrderItem);
     return newOrderItem;
+  }
+
+  async getOrderItems(): Promise<OrderItem[]> {
+    return Array.from(this.orderItems.values());
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const id = this.currentId.notifications++;
+    const newNotification = { ...notification, id };
+    this.notifications.set(id, newNotification);
+    return newNotification;
+  }
+
+  async getNotifications(): Promise<Notification[]> {
+    return Array.from(this.notifications.values());
+  }
+
+  async markNotificationAsRead(id: number): Promise<void> {
+    const notification = this.notifications.get(id);
+    if (notification) {
+      this.notifications.set(id, { ...notification, isRead: true });
+    }
   }
 }
 

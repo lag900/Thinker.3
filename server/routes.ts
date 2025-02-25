@@ -27,6 +27,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/products/:id", async (req, res) => {
     const product = await storage.updateProduct(parseInt(req.params.id), req.body);
+
+    // Check if stock is low after update
+    if (product.stock <= product.minStockLevel) {
+      await storage.createNotification({
+        type: "low_stock",
+        message: `المنتج ${product.name} منخفض المخزون (${product.stock} وحدة متبقية)`,
+        isRead: false,
+        createdAt: new Date().toISOString()
+      });
+    }
+
     res.json(product);
   });
 
@@ -68,10 +79,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orders
   app.post("/api/orders", async (req, res) => {
     const { customerId, items } = req.body;
-    
+
     // Calculate total from items
     const total = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
-    
+
     const order = await storage.createOrder({
       customerId,
       status: "pending",
@@ -98,6 +109,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     res.json(order);
   });
+
+  // Add these routes after the existing ones
+  app.get("/api/order-items", async (req, res) => {
+    const items = await storage.getOrderItems();
+    res.json(items);
+  });
+
+  app.get("/api/notifications", async (req, res) => {
+    const notifications = await storage.getNotifications();
+    res.json(notifications);
+  });
+
+  app.post("/api/notifications/read/:id", async (req, res) => {
+    await storage.markNotificationAsRead(parseInt(req.params.id));
+    res.status(204).end();
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;

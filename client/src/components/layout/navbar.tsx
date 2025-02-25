@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ShoppingCart, Package, Users, Truck, FileText } from "lucide-react";
+import { ShoppingCart, Package, Users, Truck, FileText, BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
@@ -19,6 +19,13 @@ export function Navbar() {
           </Link>
 
           <div className="border-l h-6 mx-2" />
+
+          <Link href="/admin/analytics">
+            <Button variant="ghost">
+              <BarChart className="h-5 w-5 mr-2" />
+              التحليلات
+            </Button>
+          </Link>
 
           <Link href="/admin/invoice">
             <Button variant="ghost">

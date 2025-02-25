@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, numeric, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, numeric, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -10,6 +10,7 @@ export const products = pgTable("products", {
   price: numeric("price").notNull(),
   stock: integer("stock").notNull(),
   image: text("image").notNull(),
+  minStockLevel: integer("min_stock_level").notNull().default(10),
 });
 
 export const customers = pgTable("customers", {
@@ -31,6 +32,7 @@ export const orders = pgTable("orders", {
   customerId: integer("customer_id").notNull(),
   status: text("status").notNull(),
   total: numeric("total").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const orderItems = pgTable("order_items", {
@@ -41,11 +43,20 @@ export const orderItems = pgTable("order_items", {
   price: numeric("price").notNull(),
 });
 
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // "low_stock", "new_order", etc.
+  message: text("message").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true });
 export const insertSupplierSchema = createInsertSchema(suppliers).omit({ id: true });
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true });
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
@@ -57,3 +68,5 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
