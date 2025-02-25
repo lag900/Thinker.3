@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ShoppingCart, Package, Users, Truck, FileText, BarChart } from "lucide-react";
+import { ShoppingCart, Package, Users, Truck, FileText, BarChart, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
@@ -52,6 +52,13 @@ export function Navbar() {
             <Button variant="ghost">
               <Truck className="h-5 w-5 mr-2" />
               الموردين
+            </Button>
+          </Link>
+
+          <Link href="/admin/expenses">
+            <Button variant="ghost">
+              <DollarSign className="h-5 w-5 mr-2" />
+              المصروفات
             </Button>
           </Link>
         </div>

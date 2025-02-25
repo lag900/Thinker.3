@@ -13,6 +13,7 @@ import Analytics from "@/pages/admin/analytics";
 import Inventory from "@/pages/admin/inventory";
 import Customers from "@/pages/admin/customers";
 import Suppliers from "@/pages/admin/suppliers";
+import Expenses from "@/pages/admin/expenses";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/admin/inventory" component={Inventory} />
       <Route path="/admin/customers" component={Customers} />
       <Route path="/admin/suppliers" component={Suppliers} />
+      <Route path="/admin/expenses" component={Expenses} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -1,13 +1,21 @@
 import {
+  type User, type InsertUser,
   type Product, type InsertProduct,
   type Customer, type InsertCustomer,
   type Supplier, type InsertSupplier,
   type Order, type InsertOrder,
   type OrderItem, type InsertOrderItem,
+  type Expense, type InsertExpense,
   type Notification, type InsertNotification
 } from "@shared/schema";
 
 export interface IStorage {
+  // Users
+  getUsers(): Promise<User[]>;
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+
   // Products
   getProducts(): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
@@ -35,48 +43,88 @@ export interface IStorage {
   createOrder(order: InsertOrder): Promise<Order>;
   getOrderItems(orderId: number): Promise<OrderItem[]>;
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
+  getAllOrderItems(): Promise<OrderItem[]>;
+
+  // Expenses
+  getExpenses(): Promise<Expense[]>;
+  createExpense(expense: InsertExpense): Promise<Expense>;
 
   // Analytics
-  getOrderItems(): Promise<OrderItem[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   getNotifications(): Promise<Notification[]>;
   markNotificationAsRead(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
+  private users: Map<number, User>;
   private products: Map<number, Product>;
   private customers: Map<number, Customer>;
   private suppliers: Map<number, Supplier>;
   private orders: Map<number, Order>;
   private orderItems: Map<number, OrderItem>;
+  private expenses: Map<number, Expense>;
   private notifications: Map<number, Notification>;
   private currentId: { [key: string]: number };
 
   constructor() {
+    this.users = new Map();
     this.products = new Map();
     this.customers = new Map();
     this.suppliers = new Map();
     this.orders = new Map();
     this.orderItems = new Map();
+    this.expenses = new Map();
     this.notifications = new Map();
     this.currentId = {
+      users: 1,
       products: 1,
       customers: 1,
       suppliers: 1,
       orders: 1,
       orderItems: 1,
+      expenses: 1,
       notifications: 1
     };
+
+    // Add sample admin user
+    this.createUser({
+      name: "Admin",
+      email: "admin@example.com",
+      password: "admin123",
+      role: "admin"
+    });
 
     // Add some sample data
     this.createProduct({
       name: "Sample Product",
       code: "SP001",
       description: "A sample product description",
-      price: 29.99,
+      wholesalePrice: "20.00",
+      price: "29.99",
       stock: 100,
-      image: "https://source.unsplash.com/400x400/?product"
+      image: "https://source.unsplash.com/400x400/?product",
+      minStockLevel: 10
     });
+  }
+
+  // Users
+  async getUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const id = this.currentId.users++;
+    const newUser = { ...user, id };
+    this.users.set(id, newUser);
+    return newUser;
   }
 
   // Products
@@ -174,7 +222,7 @@ export class MemStorage implements IStorage {
 
   async createOrder(order: InsertOrder): Promise<Order> {
     const id = this.currentId.orders++;
-    const newOrder = { ...order, id };
+    const newOrder = { ...order, id, createdAt: new Date() };
     this.orders.set(id, newOrder);
     return newOrder;
   }
@@ -190,13 +238,26 @@ export class MemStorage implements IStorage {
     return newOrderItem;
   }
 
-  async getOrderItems(): Promise<OrderItem[]> {
+  async getAllOrderItems(): Promise<OrderItem[]> {
     return Array.from(this.orderItems.values());
   }
 
+  // Expenses
+  async getExpenses(): Promise<Expense[]> {
+    return Array.from(this.expenses.values());
+  }
+
+  async createExpense(expense: InsertExpense): Promise<Expense> {
+    const id = this.currentId.expenses++;
+    const newExpense = { ...expense, id };
+    this.expenses.set(id, newExpense);
+    return newExpense;
+  }
+
+  // Notifications
   async createNotification(notification: InsertNotification): Promise<Notification> {
     const id = this.currentId.notifications++;
-    const newNotification = { ...notification, id };
+    const newNotification = { ...notification, id, createdAt: new Date() };
     this.notifications.set(id, newNotification);
     return newNotification;
   }
